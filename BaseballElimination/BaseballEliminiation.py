@@ -82,18 +82,26 @@ class BaseballElimination:
     def print_info(self):
 
         max_len = 0
+        l1,l2,l3,l4 = 0,0,0,0
         teams = self.indexToTeam
         for x in teams:
-            max_len = max(max_len,len(x))
+            max_len = max(max_len, len(x))
+            l1 = max(l1, len(str(self.wins(x))))
+            l2 = max(l2, len(str(self.losses(x))))
+            l3 = max(l3, len(str(self.remaining(x))))
+
+        for x in range(self.teams):
+            for y in range(self.teams):
+                l4 = max(l4, len(str(self.gameGrid[x][y])))
 
         max_len += 2
         for x in teams:
-            temp = [p1.against(x, w) for w in teams]
+            temp = [self.against(x, w) for w in teams]
             ss = ""
             for w in temp:
-                ss += str(w) + " "
+                ss += (" "*(l4-len(str(w))))+str(w) + " "
             sp = " " *(max_len-len(x))
-            print(x + sp + str(self.wins(x)) + " " + str(self.losses(x)) + " " + str(self.remaining(x)) + "  " + ss)
+            print(x + sp + (" "*(l1-len(str(self.wins(x)))))+str(self.wins(x)) + " " +(" "*(l1-len(str(self.losses(x)))))+ str(self.losses(x)) + " " + (" "*(l1-len(str(self.remaining(x)))))+str(self.remaining(x)) + "  " + ss)
 
     def is_eliminated(self, team: str):
 
