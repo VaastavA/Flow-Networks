@@ -23,10 +23,6 @@ class BaseballElimination:
 
         for x in self.indexToTeam:
             self.graph_construction(x)
-            self.ford_fulkerson()
-
-        print(self.results)
-        print(self.certificates)
 
     def process_file(self):
 
@@ -53,18 +49,21 @@ class BaseballElimination:
         return self.indextoTeam
 
     def wins(self, team: str):
+
         if team in self.teamToIndex:
             return self.winCount[self.teamToIndex[team]]
         else:
             return "Team does not exist"
 
     def losses(self, team: str):
+
         if team in self.teamToIndex:
             return self.loseCount[self.teamToIndex[team]]
         else:
             return "Team does not exist"
 
     def remaining(self, team: str):
+
         if team in self.teamToIndex:
             return self.remainingCount[self.teamToIndex[team]]
         else:
@@ -97,13 +96,22 @@ class BaseballElimination:
             print(x + sp + str(self.wins(x)) + " " + str(self.losses(x)) + " " + str(self.remaining(x)) + "  " + ss)
 
     def is_eliminated(self, team: str):
-        pass
+
+        if team in self.teamToIndex:
+            return self.remainingCount[self.teamToIndex[team]]
+        else:
+            return self.results[team]
 
     def certificate_of_elimination(self, team: str):
-        pass
+
+        if team in self.teamToIndex:
+            return self.remainingCount[self.teamToIndex[team]]
+        else:
+            return self.certificates[team]
 
     def graph_construction(self, team: str):
 
+        self.graph = dict()
         graph = self.graph
         self.cur_team = team
         self.temp_teams = copy.deepcopy(self.indexToTeam)
@@ -119,7 +127,11 @@ class BaseballElimination:
 
         for x in temp_teams:
             graph[x] = dict()
-            forward = FlowEdge(mix-self.wins(x))
+            forward = FlowEdge(max(0, mix-self.wins(x)))
+            if mix-self.wins(x) < 0:
+                self.results[self.cur_team] = True
+                self.certificates[self.cur_team] = {x}
+                return
             reverse = FlowEdge(0)
             forward.connect(reverse)
             reverse.connect(forward)
@@ -153,11 +165,11 @@ class BaseballElimination:
                 graph[node][temp_teams[j]] = forward3
                 graph[temp_teams[j]][node] = reverse3
 
-        for a in graph:
-            print(a, graph[a])
+        self.ford_fulkerson()
 
     def ford_fulkerson(self):
 
+        temp_teams = self.temp_teams
         graph = self.graph
 
         while True:
@@ -193,8 +205,7 @@ class BaseballElimination:
                 r = len(nodes)
 
                 for i in range(r-1):
-                    bottleneck = min(bottleneck, graph[nodes[i]][nodes[i+1]].capacity)
-
+                    bottleneck = min(bottleneck, graph[nodes[i]][nodes[i+1]].get_capacity())
                 for i in range(r-1):
                     graph[nodes[i]][nodes[i + 1]].send_flow(bottleneck)
             else:
@@ -206,15 +217,41 @@ class BaseballElimination:
         for x in src_adj:
             if src_adj[x].get_capacity() != 0:
                 eliminated = True
-                r_nodes = x.split("||")
-                r_nodes[0] = r_nodes[0].replace(" ", "")
-                r_nodes[1] = r_nodes[1].replace(" ", "")
-                r_set.add(r_nodes[0])
-                r_set.add(r_nodes[1])
+
+        if eliminated:
+            visited = dict()
+
+            for x in graph:
+                visited[x] = False
+
+            q = list()
+            q.append('src')
+
+            while len(q) > 0:
+                temp_node = q.pop(0)
+                adj = graph[temp_node]
+                visited[temp_node] = True
+
+                for x in adj:
+                    if adj[x].get_capacity() > 0 and visited[x] == False: q.append(x)
+
+            for x in temp_teams:
+                if visited[x]: r_set.add(x)
 
         self.results[self.cur_team] = eliminated
         self.certificates[self.cur_team] = r_set
 
+    def print_results(self):
 
-p1 = BaseballElimination("team5")
-p1.print_info()
+        self.print_info()
+        print()
+
+        for x in self.indexToTeam:
+            if self.results[x]:
+                print(x+" is eliminated by the subset R = "+str(self.certificates[x]))
+            else:
+                print(x+" is not eliminated")
+
+
+p1 = BaseballElimination("teams54.txt")
+p1.print_results()
