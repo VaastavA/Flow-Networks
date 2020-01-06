@@ -1,5 +1,5 @@
 from FlowEdge import FlowEdge
-
+import copy
 
 class CustomError(Exception):
     pass
@@ -111,18 +111,21 @@ class BipartiteMatching:
                 break
 
         x = 0
+        self.right_unmatched = copy.deepcopy(self.rightSet)
         while x < self.leftSize:
             try:
                 for y in range(self.rightSize):
                     if self.matchingMatrix[x][y] == 1 and graph[self.leftSet[x]][self.rightSet[y]].get_capacity() == 99:
                         self.matching.append((self.leftSet[x], self.rightSet[y]))
+                        self.right_unmatched.remove(self.rightSet[y])
                         x += 1
                         raise CustomError
+                self.left_unmatched.append(self.leftSet[x])
                 x += 1
             except CustomError:
                 pass
 
-        
+
 
     def print_results(self):
 
